@@ -93,7 +93,7 @@ func Test_DeployCmd_WithCustomImage(t *testing.T) {
 	assert.Equal(t, 0, len(kogitoRuntime.Spec.Env))
 }
 
-func Test_InstallSupportingServiceCmd__WithCustomConfigFile(t *testing.T) {
+func Test_DeployCmd_WithCustomConfig(t *testing.T) {
 	tempFile, err := ioutil.TempFile("", "application.properties")
 	assert.NoError(t, err)
 	properties := `

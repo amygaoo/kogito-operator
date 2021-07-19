@@ -22,7 +22,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"strconv"
 )
 
 const (
@@ -90,20 +89,13 @@ func (t *trustStoreHandler) fetchAndValidateTrustStoreSecret(service api.KogitoS
 }
 
 func (t *trustStoreHandler) mountTrustStoreFile(deployment *appsv1.Deployment, secret *v1.Secret) error {
-
-	fileMode, err := strconv.Atoi(framework.ModeForCertificates)
-	if err != nil {
-		return err
-	}
-	fileModeInt32 := int32(fileMode)
-
 	trustStoreVolume := v1.Volume{
 		Name: trustStoreVolumeName,
 		VolumeSource: v1.VolumeSource{
 			Secret: &v1.SecretVolumeSource{
 				SecretName:  secret.Name,
 				Items:       []v1.KeyToPath{{Key: trustStoreSecretFileKey, Path: trustStoreSecretFileKey}},
-				DefaultMode: &fileModeInt32,
+				DefaultMode: &framework.ModeForCertificates,
 			},
 		},
 	}

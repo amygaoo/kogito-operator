@@ -92,7 +92,7 @@ func (p *protobufConfigMapHandler) CreateProtoBufConfigMap(runtimeInstance api.K
 			Annotations: map[string]string{
 				infrastructure.FromFileKey:  "true",
 				infrastructure.MountPathKey: path.Join(DefaultProtobufMountPath, runtimeInstance.GetName()),
-				infrastructure.FileModeKey:  framework.ModeForProtoBufConfigMapVolume,
+				infrastructure.FileModeKey:  fmt.Sprint(framework.ModeForProtoBufConfigMapVolume),
 			},
 		},
 		Data: p.getProtobufData(runtimeInstance),

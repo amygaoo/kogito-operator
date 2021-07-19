@@ -117,8 +117,9 @@ func appendVolumeMountAnnotations(configMap *corev1.ConfigMap) bool {
 		updateRequire = true
 	}
 
-	if annotations[infrastructure.FileModeKey] != framework.ModeForPropertyFiles {
-		annotations[infrastructure.FileModeKey] = framework.ModeForPropertyFiles
+	fileMode := fmt.Sprint(framework.ModeForPropertyFiles)
+	if annotations[infrastructure.FileModeKey] != fileMode {
+		annotations[infrastructure.FileModeKey] = fileMode
 		updateRequire = true
 	}
 	configMap.Annotations = annotations
