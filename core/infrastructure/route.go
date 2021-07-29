@@ -20,6 +20,7 @@ import (
 	"github.com/kiegroup/kogito-operator/core/operator"
 	routev1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -67,9 +68,12 @@ func (r *routeHandler) CreateRoute(service *corev1.Service) (route *routev1.Rout
 		r.Log.Warn("Impossible to create a Route without a target service")
 		return route
 	}
-
+	r.Log.Debug("Checking length of hostname")
+	NewObjectMeta := TruncateHostname(service.ObjectMeta)
+	r.Log.Info("Old ObjectMeta Name: " + service.ObjectMeta.Name)
+	r.Log.Info("New ObjectMeta Name: " + NewObjectMeta.Name)
 	route = &routev1.Route{
-		ObjectMeta: service.ObjectMeta,
+		ObjectMeta: NewObjectMeta,
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{
 				TargetPort: intstr.FromString(service.Spec.Ports[0].Name),
@@ -83,4 +87,31 @@ func (r *routeHandler) CreateRoute(service *corev1.Service) (route *routev1.Rout
 
 	route.ResourceVersion = ""
 	return route
+}
+
+const MAX_LABEL_LEN = 63
+
+// type LabelUtility interface {
+// 	TruncateLabel() string
+// }
+
+// TruncateLabel truncates labels if they are longer than MAX_LABEL_LEN
+func TruncateLabel(str string) string {
+
+	if len(str) > MAX_LABEL_LEN {
+		return str[:MAX_LABEL_LEN]
+	}
+	return str
+}
+
+// TruncateHostname truncates name if name and namespace are longer than MAX_LABEL_LEN
+func TruncateHostname(ObjectMeta metav1.ObjectMeta) metav1.ObjectMeta {
+	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
+	if len(hostname) > MAX_LABEL_LEN {
+		extra_chars := (len(hostname) - MAX_LABEL_LEN)
+		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_chars]
+	}
+
+	return ObjectMeta
+
 }
