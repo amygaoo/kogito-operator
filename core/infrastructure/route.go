@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // RouteHandler ...
@@ -68,12 +69,9 @@ func (r *routeHandler) CreateRoute(service *corev1.Service) (route *routev1.Rout
 		r.Log.Warn("Impossible to create a Route without a target service")
 		return route
 	}
-	r.Log.Debug("Checking length of hostname")
-	NewObjectMeta := TruncateHostname(service.ObjectMeta)
-	r.Log.Info("Old ObjectMeta Name: " + service.ObjectMeta.Name)
-	r.Log.Info("New ObjectMeta Name: " + NewObjectMeta.Name)
+	TruncateHostname(&service.ObjectMeta)
 	route = &routev1.Route{
-		ObjectMeta: NewObjectMeta,
+		ObjectMeta: service.ObjectMeta,
 		Spec: routev1.RouteSpec{
 			Port: &routev1.RoutePort{
 				TargetPort: intstr.FromString(service.Spec.Ports[0].Name),
@@ -89,29 +87,21 @@ func (r *routeHandler) CreateRoute(service *corev1.Service) (route *routev1.Rout
 	return route
 }
 
-const MAX_LABEL_LEN = 63
-
-// type LabelUtility interface {
-// 	TruncateLabel() string
+// // TruncateHostname truncates name if they are longer than DNS1123LabelMaxLength
+// func TruncateHostname(ObjectMeta metav1.ObjectMeta) string {
+// 	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
+// 	if len(hostname) > validation.DNS1123LabelMaxLength {
+// 		hostname = hostname[:validation.DNS1123LabelMaxLength]
+// 	}
+// 	return hostname
 // }
 
-// TruncateLabel truncates labels if they are longer than MAX_LABEL_LEN
-func TruncateLabel(str string) string {
-
-	if len(str) > MAX_LABEL_LEN {
-		return str[:MAX_LABEL_LEN]
-	}
-	return str
-}
-
-// TruncateHostname truncates name if name and namespace are longer than MAX_LABEL_LEN
-func TruncateHostname(ObjectMeta metav1.ObjectMeta) metav1.ObjectMeta {
+// TruncateHostname truncates service and route name if name and namespace are longer than DNS1123LabelMaxLength for route creation
+func TruncateHostname(ObjectMeta *metav1.ObjectMeta) {
 	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
-	if len(hostname) > MAX_LABEL_LEN {
-		extra_chars := (len(hostname) - MAX_LABEL_LEN)
-		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_chars]
+	if extra_characters := len(hostname) - validation.DNS1123LabelMaxLength; extra_characters > 0 && len(ObjectMeta.Name) > extra_characters {
+		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_characters]
 	}
-
-	return ObjectMeta
+	// TODO: Handle case where len(ObjectMeta.Name) <= extra_characters, then name will be truncated to 0 (not allowed)
 
 }
