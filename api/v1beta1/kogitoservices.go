@@ -246,6 +246,12 @@ type KogitoServiceSpec struct {
 	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=false
 	// +optional
 	TrustStoreSecret string `json:"trustStoreSecret,omitempty"`
+
+	// The custom hostname to use for created services
+	// +optional
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Host"
+	Host string `json:"host,omitempty"`
 }
 
 // GetReplicas ...
@@ -400,4 +406,9 @@ func (k *KogitoServiceSpec) GetTrustStoreSecret() string {
 // SetTrustStoreSecret ...
 func (k *KogitoServiceSpec) SetTrustStoreSecret(trustStoreSecret string) {
 	k.TrustStoreSecret = trustStoreSecret
+}
+
+// GetHost ...
+func (k *KogitoServiceSpec) GetHost() string {
+	return k.Host
 }

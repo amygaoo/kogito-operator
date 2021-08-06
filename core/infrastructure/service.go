@@ -48,6 +48,7 @@ func (s *serviceHandler) CreateService(instance api.KogitoService, deployment *a
 	}
 
 	labels := instance.GetSpec().GetServiceLabels()
+	host := instance.GetSpec().GetHost()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
@@ -63,6 +64,7 @@ func (s *serviceHandler) CreateService(instance api.KogitoService, deployment *a
 			Ports:    ports,
 			Selector: deployment.Spec.Selector.MatchLabels,
 			Type:     corev1.ServiceTypeClusterIP,
+			Host:     host,
 		},
 	}
 
