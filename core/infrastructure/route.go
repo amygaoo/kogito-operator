@@ -15,6 +15,7 @@
 package infrastructure
 
 import (
+	"github.com/kiegroup/kogito-operator/api"
 	"github.com/kiegroup/kogito-operator/core/client/kubernetes"
 	"github.com/kiegroup/kogito-operator/core/client/openshift"
 	"github.com/kiegroup/kogito-operator/core/operator"
@@ -30,7 +31,7 @@ import (
 type RouteHandler interface {
 	FetchRoute(key types.NamespacedName) (*routev1.Route, error)
 	GetHostFromRoute(routeKey types.NamespacedName) (string, error)
-	CreateRoute(service *corev1.Service) (route *routev1.Route)
+	CreateRoute(instance api.KogitoService, service *corev1.Service) (route *routev1.Route)
 }
 
 type routeHandler struct {
@@ -64,15 +65,17 @@ func (r *routeHandler) GetHostFromRoute(routeKey types.NamespacedName) (string, 
 }
 
 // createRequiredRoute creates a new Route resource based on the given Service
-func (r *routeHandler) CreateRoute(service *corev1.Service) (route *routev1.Route) {
+func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.Service) (route *routev1.Route) {
 	if service == nil || len(service.Spec.Ports) == 0 {
 		r.Log.Warn("Impossible to create a Route without a target service")
 		return route
 	}
 	TruncateHostname(&service.ObjectMeta)
+	host := instance.GetSpec().GetHost()
 	route = &routev1.Route{
 		ObjectMeta: service.ObjectMeta,
 		Spec: routev1.RouteSpec{
+			Host: host,
 			Port: &routev1.RoutePort{
 				TargetPort: intstr.FromString(service.Spec.Ports[0].Name),
 			},

@@ -532,6 +532,13 @@ func schema_kiegroup_kogito_operator_api_v1beta1_KogitoSupportingServiceSpec(ref
 							Format:      "",
 						},
 					},
+					"host": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The custom hostname to use for created services",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"serviceType": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Defines the type for the supporting service, eg: DataIndex, JobsService Default value: JobsService",
