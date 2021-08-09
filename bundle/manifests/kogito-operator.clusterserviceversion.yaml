@@ -59,7 +59,7 @@ metadata:
     containerImage: quay.io/kiegroup/kogito-operator:2.0.0-snapshot
     createdAt: "2019-08-22T13:12:22Z"
     description: Kogito Operator for deployment and management of Kogito services.
-    operators.operatorframework.io/builder: operator-sdk-v1.2.0
+    operators.operatorframework.io/builder: operator-sdk-v1.8.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v2
     repository: https://github.com/kiegroup/kogito-operator
     support: Red Hat
@@ -72,12 +72,19 @@ spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
     owned:
-    - description: KogitoBuild handles how to build a custom Kogito service in a Kubernetes/OpenShift cluster.
+    - description: KogitoBuild handles how to build a custom Kogito service in a Kubernetes/OpenShift
+        cluster.
       displayName: Kogito Build
       kind: KogitoBuild
       name: kogitobuilds.app.kiegroup.org
       version: v1beta1
-    - description: 'KogitoInfra is the resource to bind a Custom Resource (CR) not managed by Kogito Operator to a given deployed Kogito service. It holds the reference of a CR managed by another operator such as Strimzi. For example: one can create a Kafka CR via Strimzi and link this resource using KogitoInfra to a given Kogito service (custom or supporting, such as Data Index). Please refer to the Kogito Operator documentation (https://docs.jboss.org/kogito/release/latest/html_single/) for more information.'
+    - description: 'KogitoInfra is the resource to bind a Custom Resource (CR) not
+        managed by Kogito Operator to a given deployed Kogito service. It holds the
+        reference of a CR managed by another operator such as Strimzi. For example:
+        one can create a Kafka CR via Strimzi and link this resource using KogitoInfra
+        to a given Kogito service (custom or supporting, such as Data Index). Please
+        refer to the Kogito Operator documentation (https://docs.jboss.org/kogito/release/latest/html_single/)
+        for more information.'
       displayName: Kogito Infra
       kind: KogitoInfra
       name: kogitoinfras.app.kiegroup.org
@@ -87,7 +94,8 @@ spec:
       kind: KogitoRuntime
       name: kogitoruntimes.app.kiegroup.org
       version: v1beta1
-    - description: KogitoSupportingService deploys the Supporting service in the given namespace.
+    - description: KogitoSupportingService deploys the Supporting service in the given
+        namespace.
       displayName: Kogito Supporting Service
       kind: KogitoSupportingService
       name: kogitosupportingservices.app.kiegroup.org

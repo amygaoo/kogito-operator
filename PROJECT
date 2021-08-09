@@ -3,18 +3,42 @@ layout: go.kubebuilder.io/v2
 projectName: kogito-operator
 repo: github.com/kiegroup/kogito-operator
 resources:
-- group: app
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: kiegroup.org
+  group: app
   kind: KogitoRuntime
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/kiegroup/kogito-operator/api/v1beta1
   version: v1beta1
-- group: app
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: kiegroup.org
+  group: app
   kind: KogitoSupportingService
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/kiegroup/kogito-operator/api/v1beta1
   version: v1beta1
-- group: app
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: kiegroup.org
+  group: app
   kind: KogitoBuild
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/kiegroup/kogito-operator/api/v1beta1
   version: v1beta1
-- group: app
+-
+  # TODO(user): Uncomment the below line if this resource implements a controller, else delete it.
+  # controller: true
+  domain: kiegroup.org
+  group: app
   kind: KogitoInfra
+  # TODO(user): Update the package path for your API if the below value is incorrect.
+  path: github.com/kiegroup/kogito-operator/api/v1beta1
   version: v1beta1
-version: 3-alpha
+version: "3"
 plugins:
   go.sdk.operatorframework.io/v2-alpha: {}
