@@ -76,14 +76,18 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 
 	host := instance.GetSpec().GetHost()
 	r.Log.Debug("THIS IS HOST", "route", host)
-	if len(host) > 0 {
-		if err := ValidateHostName(host); len(err) != 0 {
-			r.Log.Error(err[0], "Invalid Custom HostName")
-			// TODO: What to do after error
-		}
 
-	} else {
-		TruncateHostName(&service.ObjectMeta)
+	if err := ValidateHostName(host); len(err) > 0 {
+		// host invalid
+		r.Log.Warn("Unable to use custom hostname", "error", err.ToAggregate().Error())
+		host = ""
+
+	}
+	if len(host) == 0 {
+		// host empty
+		if err := TruncateName(&service.ObjectMeta); err != nil {
+			r.Log.Warn("Unable to truncate name for route creation", "error", err)
+		}
 	}
 
 	route = &routev1.Route{
@@ -104,25 +108,33 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 	return route
 }
 
-// TruncateHostname truncates service and route name if name and namespace are longer than DNS1123LabelMaxLength for route creation
-func TruncateHostName(ObjectMeta *metav1.ObjectMeta) {
+// TruncateName truncates service and route name if name and namespace are longer than DNS1123LabelMaxLength
+func TruncateName(ObjectMeta *metav1.ObjectMeta) error {
 	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
-	if extra_characters := len(hostname) - validation.DNS1123LabelMaxLength; extra_characters > 0 && len(ObjectMeta.Name) > extra_characters {
+	extra_characters := len(hostname) - validation.DNS1123LabelMaxLength
+
+	if extra_characters > 0 && len(ObjectMeta.Name) > extra_characters {
 		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_characters]
+
+	} else if extra_characters > 0 {
+		// Handle case where len(ObjectMeta.Name) <= extra_characters, then name will be truncated to 0 (not allowed)
+		namePath := field.NewPath("name")
+		return field.Invalid(namePath, hostname, "length of name and namespace combined must be under 62 characters or provide custom hostname")
 	}
-	// TODO: Handle case where len(ObjectMeta.Name) <= extra_characters, then name will be truncated to 0 (not allowed)
+	return nil
 
 }
 
-// From https://github.com/openshift/router/blob/2d1e1f4bd413dd283c92638e23fae940ef4c1e54/pkg/router/controller/unique_host.go
+// ValidateRouteHostname validates the hostname provided by the user
+// see: https://github.com/openshift/router/blob/release-4.6/pkg/router/controller/unique_host.go#L231
 func ValidateHostName(Host string) field.ErrorList {
 	result := field.ErrorList{}
+	specPath := field.NewPath("spec")
+	hostPath := specPath.Child("host")
+
 	if len(Host) < 1 {
 		return result
 	}
-
-	specPath := field.NewPath("spec")
-	hostPath := specPath.Child("host")
 
 	if len(validation.IsDNS1123Subdomain(Host)) != 0 {
 		result = append(result, field.Invalid(hostPath, Host, "host must conform to DNS 952 subdomain conventions"))
@@ -132,7 +144,7 @@ func ValidateHostName(Host string) field.ErrorList {
 	for _, s := range segments {
 		errs := validation.IsDNS1123Label(s)
 		for _, e := range errs {
-			result = append(result, field.Invalid(hostPath, Host, e))
+			result = append(result, field.Invalid(hostPath, s, e))
 		}
 	}
 
