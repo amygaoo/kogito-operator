@@ -75,7 +75,6 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 	}
 
 	host := instance.GetSpec().GetHost()
-	r.Log.Debug("THIS IS HOST", "route", host)
 
 	if err := ValidateHostName(host); len(err) > 0 {
 		// host invalid
@@ -85,9 +84,7 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 	}
 	if len(host) == 0 {
 		// host empty
-		if err := TruncateName(&service.ObjectMeta); err != nil {
-			r.Log.Warn("Unable to truncate name for route creation", "error", err)
-		}
+		r.TruncateName(&service.ObjectMeta)
 	}
 
 	route = &routev1.Route{
@@ -108,20 +105,24 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 	return route
 }
 
-// TruncateName truncates service and route name if name and namespace are longer than DNS1123LabelMaxLength
-func TruncateName(ObjectMeta *metav1.ObjectMeta) error {
+// TruncateName truncates service and route name and namespace if length of <name>-<namespace> is longer than DNS1123LabelMaxLength
+func (r *routeHandler) TruncateName(ObjectMeta *metav1.ObjectMeta) {
 	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
 	extra_characters := len(hostname) - validation.DNS1123LabelMaxLength
+	if extra_characters <= 0 {
+		return
 
-	if extra_characters > 0 && len(ObjectMeta.Name) > extra_characters {
+	} else if len(ObjectMeta.Name) > extra_characters {
 		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_characters]
+		r.Log.Debug("Truncated service and route name")
 
-	} else if extra_characters > 0 {
-		// Handle case where len(ObjectMeta.Name) <= extra_characters, then name will be truncated to 0 (not allowed)
-		namePath := field.NewPath("name")
-		return field.Invalid(namePath, hostname, "length of name and namespace combined must be under 62 characters or provide custom hostname")
+	} else {
+		// Case where len(ObjectMeta.Name) <= extra_characters, will need to truncate namespace to fit within limit
+		ObjectMeta.Name = ObjectMeta.Name[:1]
+		truncated := len(ObjectMeta.Name) - 1
+		ObjectMeta.Namespace = ObjectMeta.Namespace[:len(ObjectMeta.Namespace)-(extra_characters-truncated)]
+		r.Log.Debug("Truncated service and route name and namespace")
 	}
-	return nil
 
 }
 
