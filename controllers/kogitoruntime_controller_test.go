@@ -15,6 +15,8 @@
 package controllers
 
 import (
+	"testing"
+
 	"github.com/kiegroup/kogito-operator/api"
 	"github.com/kiegroup/kogito-operator/api/v1beta1"
 	"github.com/kiegroup/kogito-operator/core/client/kubernetes"
@@ -22,6 +24,7 @@ import (
 	"github.com/kiegroup/kogito-operator/core/test"
 	"github.com/kiegroup/kogito-operator/meta"
 	imagev1 "github.com/openshift/api/image/v1"
+	routev1 "github.com/openshift/api/route/v1"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -29,7 +32,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"testing"
 )
 
 func TestReconcileKogitoRuntime_Reconcile(t *testing.T) {
@@ -202,4 +204,34 @@ func TestReconcileKogitoRuntime_InvalidCustomImage(t *testing.T) {
 	failedCondition := meta2.FindStatusCondition(*instance.Status.Conditions, string(api.FailedConditionType))
 	assert.Equal(t, v1.ConditionTrue, failedCondition.Status)
 	assert.Equal(t, "you may not have access to the container image quay.io/custom/process-springboot-example-default-invalid:latest", failedCondition.Message)
+}
+
+func TestUserCustomHostValid(t *testing.T) {
+	replicas := int32(1)
+	instance := &v1beta1.KogitoRuntime{
+		ObjectMeta: v1.ObjectMeta{Name: "process-springboot-example", Namespace: t.Name(), UID: test.GenerateUID()},
+		Spec: v1beta1.KogitoRuntimeSpec{
+			Runtime: api.SpringBootRuntimeType,
+			KogitoServiceSpec: v1beta1.KogitoServiceSpec{
+				Replicas: &replicas,
+				Image:    "quay.io/kiegroup/process-springboot-example-default:latest",
+			},
+		},
+	}
+	cli := test.NewFakeClientBuilder().AddK8sObjects(instance).OnOpenShift().Build()
+
+	_, err := kubernetes.ResourceC(cli).Fetch(instance)
+	assert.NoError(t, err)
+	assert.NotNil(t, instance.Status)
+
+	key := types.NamespacedName{Name: "process-springboot-example", Namespace: t.Name()}
+	exists, err := kubernetes.ResourceC(cli).FetchWithKey(key, &corev1.Service{})
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	// route := &routev1.Route{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}
+	// exists, err = kubernetes.ResourceC(cli).Fetch(route)
+	exists, err = kubernetes.ResourceC(cli).FetchWithKey(key, &routev1.Route{})
+	assert.NoError(t, err)
+	assert.True(t, exists)
 }
