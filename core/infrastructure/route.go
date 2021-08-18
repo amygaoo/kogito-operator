@@ -23,7 +23,6 @@ import (
 	"github.com/kiegroup/kogito-operator/core/operator"
 	routev1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -82,10 +81,6 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 		host = ""
 
 	}
-	if len(host) == 0 {
-		// host empty
-		r.TruncateName(&service.ObjectMeta)
-	}
 
 	route = &routev1.Route{
 		ObjectMeta: service.ObjectMeta,
@@ -103,27 +98,6 @@ func (r *routeHandler) CreateRoute(instance api.KogitoService, service *corev1.S
 
 	route.ResourceVersion = ""
 	return route
-}
-
-// TruncateName truncates service and route name and namespace if length of <name>-<namespace> is longer than DNS1123LabelMaxLength
-func (r *routeHandler) TruncateName(ObjectMeta *metav1.ObjectMeta) {
-	hostname := ObjectMeta.Name + "-" + ObjectMeta.Namespace
-	extra_characters := len(hostname) - validation.DNS1123LabelMaxLength
-	if extra_characters <= 0 {
-		return
-
-	} else if len(ObjectMeta.Name) > extra_characters {
-		ObjectMeta.Name = ObjectMeta.Name[:len(ObjectMeta.Name)-extra_characters]
-		r.Log.Debug("Truncated service and route name")
-
-	} else {
-		// Case where len(ObjectMeta.Name) <= extra_characters, will need to truncate namespace to fit within limit
-		ObjectMeta.Name = ObjectMeta.Name[:1]
-		truncated := len(ObjectMeta.Name) - 1
-		ObjectMeta.Namespace = ObjectMeta.Namespace[:len(ObjectMeta.Namespace)-(extra_characters-truncated)]
-		r.Log.Debug("Truncated service and route name and namespace")
-	}
-
 }
 
 // ValidateRouteHostname validates the hostname provided by the user
