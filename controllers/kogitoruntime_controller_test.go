@@ -208,6 +208,45 @@ func TestReconcileKogitoRuntime_InvalidCustomImage(t *testing.T) {
 
 func TestUserCustomHostValid(t *testing.T) {
 	replicas := int32(1)
+	host := "server-my-custom-route.openshift.com"
+	instance := &v1beta1.KogitoRuntime{
+		ObjectMeta: v1.ObjectMeta{Name: "process-springboot-example", Namespace: t.Name(), UID: test.GenerateUID()},
+		Spec: v1beta1.KogitoRuntimeSpec{
+			Runtime: api.SpringBootRuntimeType,
+			KogitoServiceSpec: v1beta1.KogitoServiceSpec{
+				Replicas: &replicas,
+				Image:    "quay.io/kiegroup/process-springboot-example-default:latest",
+				Host:     host,
+			},
+		},
+	}
+
+	is, tag := test.CreateFakeImageStreams("process-springboot-example-default", t.Name(), "latest")
+	err := framework.AddOwnerReference(instance, meta.GetRegisteredSchema(), is)
+	assert.NoError(t, err)
+	cli := test.NewFakeClientBuilder().AddK8sObjects(instance, is).AddImageObjects(tag).OnOpenShift().Build()
+
+	test.AssertReconcileMustNotRequeue(t, &KogitoRuntimeReconciler{Client: cli, Scheme: meta.GetRegisteredSchema(), Log: test.TestLogger}, instance)
+	_, err = kubernetes.ResourceC(cli).Fetch(instance)
+	assert.NoError(t, err)
+	assert.NotNil(t, instance.Status)
+
+	key := types.NamespacedName{Name: "process-springboot-example", Namespace: t.Name()}
+	exists, err := kubernetes.ResourceC(cli).FetchWithKey(key, &corev1.Service{})
+	assert.NoError(t, err)
+	assert.True(t, exists)
+
+	route := &routev1.Route{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}
+	exists, err = kubernetes.ResourceC(cli).Fetch(route)
+	assert.NoError(t, err)
+	assert.True(t, exists)
+	assert.Equal(t, host, route.Spec.Host)
+
+}
+
+func TestUserCustomHostInvalid(t *testing.T) {
+	replicas := int32(1)
+	host := "server-my-custom-route-that-is-over-the-valid-dns-label-length-of-63.openshift.com"
 	instance := &v1beta1.KogitoRuntime{
 		ObjectMeta: v1.ObjectMeta{Name: "process-springboot-example", Namespace: t.Name(), UID: test.GenerateUID()},
 		Spec: v1beta1.KogitoRuntimeSpec{
@@ -218,9 +257,15 @@ func TestUserCustomHostValid(t *testing.T) {
 			},
 		},
 	}
-	cli := test.NewFakeClientBuilder().AddK8sObjects(instance).OnOpenShift().Build()
 
-	_, err := kubernetes.ResourceC(cli).Fetch(instance)
+	is, tag := test.CreateFakeImageStreams("process-springboot-example-default", t.Name(), "latest")
+	err := framework.AddOwnerReference(instance, meta.GetRegisteredSchema(), is)
+	assert.NoError(t, err)
+
+	cli := test.NewFakeClientBuilder().AddK8sObjects(instance, is).AddImageObjects(tag).OnOpenShift().Build()
+	test.AssertReconcileMustNotRequeue(t, &KogitoRuntimeReconciler{Client: cli, Scheme: meta.GetRegisteredSchema(), Log: test.TestLogger}, instance)
+
+	_, err = kubernetes.ResourceC(cli).Fetch(instance)
 	assert.NoError(t, err)
 	assert.NotNil(t, instance.Status)
 
@@ -229,9 +274,10 @@ func TestUserCustomHostValid(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, exists)
 
-	// route := &routev1.Route{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}
-	// exists, err = kubernetes.ResourceC(cli).Fetch(route)
-	exists, err = kubernetes.ResourceC(cli).FetchWithKey(key, &routev1.Route{})
+	route := &routev1.Route{ObjectMeta: v1.ObjectMeta{Name: instance.Name, Namespace: instance.Namespace}}
+	exists, err = kubernetes.ResourceC(cli).Fetch(route)
 	assert.NoError(t, err)
 	assert.True(t, exists)
+	assert.NotEqual(t, host, route.Spec.Host)
+	assert.Equal(t, "", route.Spec.Host)
 }
