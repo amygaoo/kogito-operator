@@ -15,7 +15,7 @@
 package v1beta1
 
 import (
-	"github.com/kiegroup/kogito-operator/apis"
+	api "github.com/kiegroup/kogito-operator/apis"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -253,6 +253,15 @@ type KogitoServiceSpec struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=spec
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors="urn:alm:descriptor:io.kubernetes:Secret"
 	TrustStoreSecret string `json:"trustStoreSecret,omitempty"`
+
+	// A flag indicating that default route should be created. Usable just on OpenShift.
+	//
+	// Defaults to 'false'.
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Route"
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors="urn:alm:descriptor:com.tectonic.ui:booleanSwitch"
+	Route bool `json:"route,omitempty"`
 }
 
 // GetReplicas ...
@@ -410,3 +419,6 @@ func (k *KogitoServiceSpec) GetTrustStoreSecret() string {
 func (k *KogitoServiceSpec) SetTrustStoreSecret(trustStoreSecret string) {
 	k.TrustStoreSecret = trustStoreSecret
 }
+
+// IsRouteEnabled ...
+func (k *KogitoServiceSpec) IsRouteEnabled() bool { return k.Route }

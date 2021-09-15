@@ -19,7 +19,7 @@ import (
 
 	"github.com/RHsyseng/operator-utils/pkg/resource"
 	"github.com/RHsyseng/operator-utils/pkg/resource/compare"
-	"github.com/kiegroup/kogito-operator/apis"
+	api "github.com/kiegroup/kogito-operator/apis"
 	"github.com/kiegroup/kogito-operator/core/client/kubernetes"
 	"github.com/kiegroup/kogito-operator/core/framework"
 	"github.com/kiegroup/kogito-operator/core/infrastructure"
@@ -58,7 +58,7 @@ func (s *serviceDeployer) createRequiredResources(image string) (resources map[r
 	serviceHandler := infrastructure.NewServiceHandler(s.Context)
 	service := serviceHandler.CreateService(s.instance, deployment)
 	resources[reflect.TypeOf(corev1.Service{})] = []resource.KubernetesResource{service}
-	if s.Client.IsOpenshift() {
+	if s.Client.IsOpenshift() && s.instance.GetSpec().IsRouteEnabled() {
 		routeHandler := infrastructure.NewRouteHandler(s.Context)
 		resources[reflect.TypeOf(routev1.Route{})] = []resource.KubernetesResource{routeHandler.CreateRoute(service)}
 	}

@@ -690,6 +690,13 @@ func schema_kogito_operator_apis_app_v1beta1_KogitoSupportingServiceSpec(ref com
 							Format:      "",
 						},
 					},
+					"route": {
+						SchemaProps: spec.SchemaProps{
+							Description: "A flag indicating that default route should be created. Usable just on OpenShift.\n\nDefaults to 'false'.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"serviceType": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Defines the type for the supporting service, eg: DataIndex, JobsService Default value: JobsService",
