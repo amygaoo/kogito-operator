@@ -15,7 +15,7 @@
 package kogitoservice
 
 import (
-	"github.com/kiegroup/kogito-operator/apis"
+	api "github.com/kiegroup/kogito-operator/apis"
 	"github.com/kiegroup/kogito-operator/core/framework"
 	"github.com/kiegroup/kogito-operator/core/infrastructure"
 	"github.com/kiegroup/kogito-operator/core/manager"
@@ -149,6 +149,7 @@ func (s *serviceDeployer) Deploy() error {
 
 	routeReconciler := newRouteReconciler(s.Context, s.instance)
 	if err = routeReconciler.Reconcile(); err != nil {
+		s.Log.Info("Error occurs while reconciling route", "err", err)
 		return err
 	}
 
