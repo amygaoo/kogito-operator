@@ -16,6 +16,8 @@ package app
 
 import (
 	"context"
+	"reflect"
+
 	appv1beta1 "github.com/kiegroup/kogito-operator/apis/app/v1beta1"
 	"github.com/kiegroup/kogito-operator/core/client"
 	"github.com/kiegroup/kogito-operator/core/infrastructure"
@@ -30,7 +32,6 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -81,6 +82,12 @@ func (r *KogitoSupportingServiceReconciler) Reconcile(ctx context.Context, req c
 	if instance == nil {
 		log.Debug("kogitoSupportingService Instance not found")
 		return
+	}
+
+	// set default behaviour as enable routes
+	if instance.GetSpec().IsRouteDisabled() == nil {
+		trueValue := false
+		instance.GetSpec().SetDisableRoute(&trueValue)
 	}
 
 	supportingServiceManager := manager.NewKogitoSupportingServiceManager(kogitoContext, supportingServiceHandler)
