@@ -86,8 +86,8 @@ func (r *KogitoSupportingServiceReconciler) Reconcile(ctx context.Context, req c
 
 	// set default behaviour as enable routes
 	if instance.GetSpec().IsRouteDisabled() == nil {
-		trueValue := false
-		instance.GetSpec().SetDisableRoute(&trueValue)
+		falseValue := false
+		instance.GetSpec().SetDisableRoute(&falseValue)
 	}
 
 	supportingServiceManager := manager.NewKogitoSupportingServiceManager(kogitoContext, supportingServiceHandler)
